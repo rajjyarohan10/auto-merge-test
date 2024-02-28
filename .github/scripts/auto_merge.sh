@@ -7,11 +7,6 @@
         This script is being called from the excell release tool
 COMMENT
 
-# Setting colors
-red=$(tput setaf 1)
-green=$(tput setaf 2)
-reset=$(tput sgr0)
-
 # Check for the correct number of arguments
 if [ "$#" -ne 2 ]; then
     echo "Usage: $0 <base_branch> <release_branch>"
@@ -31,13 +26,13 @@ send_notification() {
 cd "$(dirname "$0")/../../" || exit
 
 # Checkout the release branch and update
-echo "${red}Checking out ...${reset}"
+echo ">>> Checking out ..."
 git fetch origin
 git checkout "$RELEASE_BRANCH" || exit
 git pull origin "$RELEASE_BRANCH" || send_notification "Failed to pull release branch: $RELEASE_BRANCH"
 
 # Check for .config file changes
-echo "${green}Before changing configs ...${reset}"
+echo ">>> Before changing configs ..."
 CONFIG_CHANGES=$(git diff --name-only "origin/$BASE_BRANCH...$RELEASE_BRANCH" | grep '.config$')
 if [ ! -z "$CONFIG_CHANGES" ]; then
     send_notification "Aborted merge due to .config file changes between $BASE_BRANCH and $RELEASE_BRANCH."
@@ -45,7 +40,7 @@ if [ ! -z "$CONFIG_CHANGES" ]; then
 fi
 
 # Attempt to merge the release branch into the base branch
-echo "${green}Merging attempt ...${reset}"
+echo ">>> Merging attempt ..."
 git checkout "$BASE_BRANCH" || exit
 git pull origin "$BASE_BRANCH" || send_notification "Failed to pull base branch: $BASE_BRANCH"
 MERGE_RESULT=$(git merge --no-ff --strategy-option=ours "$RELEASE_BRANCH" 2>&1)
