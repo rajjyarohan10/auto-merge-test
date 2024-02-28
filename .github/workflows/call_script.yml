@@ -1,0 +1,26 @@
+name: Call AutoMerge Script
+
+on:
+  workflow_dispatch:
+    inputs:
+      base_branch:
+        description: 'Base Branch to merge into (e.g., master or develop)'
+        required: true
+      release_branch:
+        description: 'Release Branch to merge from'
+        required: true
+
+jobs:
+  call-script:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Make autoMerge.sh executable
+        run: chmod +x ./.github/scripts/automerge.sh
+
+      - name: Run autoMerge.sh script
+        run: ./.github/scripts/autoMerge.sh ${{ github.event.inputs.base_branch }} ${{ github.event.inputs.release_branch }}
+        # env:
+          # Include any environment variables or secrets your script needs
