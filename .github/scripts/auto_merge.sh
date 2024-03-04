@@ -13,6 +13,10 @@ if [ "$#" -ne 2 ]; then
     exit 1
 fi
 
+# Configuration Git with a specific user name and email
+git config user.name "rajjyarohan10"
+git config user.email "rajjyarohan@gmail.com"
+
 # Assigning command-line arguments to variables
 BASE_BRANCH=$1
 RELEASE_BRANCH=$2
