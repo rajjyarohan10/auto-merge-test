@@ -20,55 +20,34 @@ RELEASE_BRANCH=$2
 # Function to send notification to admin
 send_notification() {
     echo "Notification to admin: $1"
-    # Need to add actual notification logic here
-    # Send a message to Teams or email
 }
 
-# # Set Git configuration for commits made by this script
-# git config user.name ""
-# git config user.email ""
+# # Ensuring we're in the repository directory (GitHub Actions runner starts in the root of the repository)
+# cd "$(dirname "$0")/../../" || exit
 
-# Ensure we're in the repository directory
-# cd "${GITHUB_WORKSPACE}" || {
-#     send_notification "Failed to change to GitHub workspace. Aborting."
-#     exit 1
-# }
-
-# Fetch all branch history
-git fetch --all
+# Stash any uncommitted changes
+echo ">>> Stashing any uncommitted changes ..."
+git stash push -m "Auto-stash by auto_merge.sh"
 
 # Checkout the release branch and update
 echo ">>> Checking out the release branch: $RELEASE_BRANCH ..."
-git checkout "$RELEASE_BRANCH" || {
-    send_notification "Failed to checkout release branch: $RELEASE_BRANCH. Aborting."
-    exit 1
-}
-
-git pull origin "$RELEASE_BRANCH" || {
-    send_notification "Failed to pull release branch: $RELEASE_BRANCH. Aborting."
-    exit 1
-}
+git fetch origin
+git checkout "$RELEASE_BRANCH" || exit
+git pull origin "$RELEASE_BRANCH" || send_notification "Failed to pull release branch: $RELEASE_BRANCH"
 
 # Check for .config file changes
 echo ">>> Checking for .config file changes ..."
 CONFIG_CHANGES=$(git diff --name-only "origin/$BASE_BRANCH...$RELEASE_BRANCH" | grep '.config$')
 if [ ! -z "$CONFIG_CHANGES" ]; then
     send_notification "Aborted merge due to .config file changes between $BASE_BRANCH and $RELEASE_BRANCH."
+    git stash pop # Optional: pop the stash if you want to restore the changes after detecting config changes
     exit 0
 fi
 
 # Attempt to merge the release branch into the base branch
 echo ">>> Attempting merge into the base branch: $BASE_BRANCH ..."
-git checkout "$BASE_BRANCH" || {
-    send_notification "Failed to checkout base branch: $BASE_BRANCH. Aborting."
-    exit 1
-}
-
-git pull origin "$BASE_BRANCH" || {
-    send_notification "Failed to pull base branch: $BASE_BRANCH. Aborting."
-    exit 1
-}
-
+git checkout "$BASE_BRANCH" || exit
+git pull origin "$BASE_BRANCH" || send_notification "Failed to pull base branch: $BASE_BRANCH"
 MERGE_RESULT=$(git merge --no-ff --strategy-option=ours "$RELEASE_BRANCH" 2>&1)
 if [ $? -eq 0 ]; then
     echo "Successfully merged $RELEASE_BRANCH into $BASE_BRANCH."
@@ -79,5 +58,10 @@ else
         send_notification "Merge conflict detected when merging $RELEASE_BRANCH into $BASE_BRANCH. Merge aborted."
     fi
     git merge --abort
-    exit 0
 fi
+
+# Pop the stash to restore uncommitted changes
+echo ">>> Restoring uncommitted changes ..."
+git stash pop || echo "No stash entries found."
+
+exit 0
