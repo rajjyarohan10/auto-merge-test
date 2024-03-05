@@ -21,6 +21,12 @@ jobs:
         with:
           fetch-depth: 0  # Fetches all history for all tags and branches
 
+      - name: Set up Git with PAT
+        run: |
+          git config user.name "rajjyarohan10"
+          git config user.email "rajjyarohan@gmail.com"
+          git config --global http.https://github.com/.extraheader "AUTHORIZATION: basic $(echo -n x-access-token:${{ secrets.MY_GITHUB_TOKEN }} | base64 --wrap=0)"
+
       - name: Configure Git
         run: |
           # Fix this user and email
