@@ -13,9 +13,9 @@ if [ "$#" -ne 2 ]; then
     exit 1
 fi
 
-# Configuration Git with a specific user name and email
-git config user.name "rajjyarohan10"
-git config user.email "rajjyarohan@gmail.com"
+# # Configuration Git with a specific user name and email
+# git config user.name "rajjyarohan10"
+# git config user.email "rajjyarohan@gmail.com"
 
 # Assigning command-line arguments to variables
 BASE_BRANCH=$1
@@ -41,12 +41,16 @@ git pull origin "$RELEASE_BRANCH" || send_notification "Failed to pull release b
 
 # Check for .config file changes
 echo ">>> Checking for .config file changes ..."
-CONFIG_CHANGES=$(git diff --name-only "origin/$BASE_BRANCH...$RELEASE_BRANCH" | grep '.config$')
+CONFIG_CHANGES=$(git diff --name-only "origin/$BASE_BRANCH...$RELEASE_BRANCH" | grep '.sfdx-json$')
 if [ ! -z "$CONFIG_CHANGES" ]; then
     send_notification "Aborted merge due to .config file changes between $BASE_BRANCH and $RELEASE_BRANCH."
     git stash pop # Optional: pop the stash if you want to restore the changes after detecting config changes
     exit 0
 fi
+
+# .config folder
+# any thing except "force app main default"
+
 
 # Attempt to merge the release branch into the base branch
 echo ">>> Attempting merge into the base branch: $BASE_BRANCH ..."
